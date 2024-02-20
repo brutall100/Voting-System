@@ -10,7 +10,8 @@
 
 Before proceeding with the above steps, ensure that the following prerequisites are installed on your computer:
  A. NODE.JS    https://nodejs.org/en               This is for download and install express AND body-parser
- B.XAMPP       https://www.apachefriends.org/      This is for database.
+
+ B. XAMPP      https://www.apachefriends.org/      This is for database.
 
  6. Open your code editor and navigate to the project directory. Then, navigate to the previously created "servers" folder. 
  Install the required dependencies by running the following command in the terminal:

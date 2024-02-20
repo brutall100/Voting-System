@@ -1,32 +1,29 @@
-const nameInput = document.getElementById("nameInput");
-const voteNumberElement = document.querySelector(".vote-number");
-const upvoteButton = document.getElementById("btn-up");
-const downvoteButton = document.getElementById("btn-down");
+const nameInput = document.getElementById("nameInput")
+const voteNumberElement = document.querySelector(".vote-number")
+const upvoteButton = document.getElementById("btn-up")
+const downvoteButton = document.getElementById("btn-down")
 
-nameInput.addEventListener("input", function() {
-    const name = nameInput.value;
-    console.log(name);
-    sendDataToServer(name);
-});
+let voteCount = 0
 
-
-let voteCount = 0;
-
-upvoteButton.addEventListener("click", function() {
-    voteCount++;
-    voteNumberElement.textContent = voteCount;
-    console.log(voteCount);
-});
+upvoteButton.addEventListener("click", function()
+{
+    voteCount++
+    voteNumberElement.textContent = voteCount
+    console.log(voteCount)
+    sendDataToServer() 
+})
 
 downvoteButton.addEventListener("click", function() {
-    voteCount--;
-    voteNumberElement.textContent = voteCount;
-    console.log(voteCount);
-});
+    voteCount--
+    voteNumberElement.textContent = voteCount
+    console.log(voteCount)
+    sendDataToServer() 
+})
 
-// Function to send data to server
-function sendDataToServer(name) {
-    fetch('/updateData', {
+//// Function to send data to server
+function sendDataToServer () {
+    const name = nameInput.value 
+    fetch(`http://localhost:3000/updateData`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -36,17 +33,20 @@ function sendDataToServer(name) {
             voteCount: voteCount
         })
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Data sent successfully:', data);
-    })
-    .catch(error => {
-        console.error('There was a problem with the fetch operation:', error);
-    });
+        .then(response =>
+        {
+            if(!response.ok) {
+                throw new Error('Network response was not ok')
+            }
+            return response.json()
+        })
+        .then(data =>
+        {
+            console.log('Data sent successfully:', data)
+        })
+        .catch(error =>
+        {
+            console.error('There was a problem with the fetch operation:', error)
+        })
 }
 
