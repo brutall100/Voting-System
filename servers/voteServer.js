@@ -26,12 +26,20 @@ const port = 3000;
 
 app.use(bodyParser.json());
 app.use(cors());
+
+// Middleware to extract IP address
+app.use((req, res, next) => {
+  req.clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  next();
+});
+
 app.post("/updateData", async (req, res) => {
   const { name, voteCount } = req.body;
-  console.log(`Received data from client - Name: ${name}, Vote Count: ${voteCount}`);
+  const ip = req.clientIp;
+  console.log(`Received data from client - Name: ${name}, Vote Count: ${voteCount}, IP: ${ip}`);
   
   // Perform the SQL INSERT operation
-  pool.query('INSERT INTO user_votes (name, voteCount) VALUES (?, ?)', [name, voteCount], (err, result) => {
+  pool.query('INSERT INTO user_votes (name, ip_address, vote_count ) VALUES (?, ?, ?)', [name, ip, voteCount], (err, result) => {
     if (err) {
       console.error("Error inserting data into database:", err);
       res.status(500).send("Error inserting data into database");
@@ -42,10 +50,10 @@ app.post("/updateData", async (req, res) => {
   });
 });
 
-
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
+
 
 
 // PS C:\xampp\htdocs\aldas\Voting-System> cd servers
