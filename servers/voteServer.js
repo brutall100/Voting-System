@@ -17,7 +17,7 @@ pool.getConnection((err, connection) => {
     console.error("Error connecting to database:", err);
   } else {
     console.log("Connected to database successfully");
-    connection.release(); // Release the connection
+    connection.release(); 
   }
 });
 
@@ -27,25 +27,67 @@ const port = 3000;
 app.use(bodyParser.json());
 app.use(cors());
 
-// Middleware to extract IP address
+//// Middleware to extract IP address
 app.use((req, res, next) => {
   req.clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   next();
 });
 
 app.post("/updateData", async (req, res) => {
-  const { name, voteCount } = req.body;
+  const { name, action } = req.body; // Extracting the action parameter
   const ip = req.clientIp;
-  console.log(`Received data from client - Name: ${name}, Vote Count: ${voteCount}, IP: ${ip}`);
   
-  // Perform the SQL INSERT operation
-  pool.query('INSERT INTO user_votes (name, ip_address, vote_count ) VALUES (?, ?, ?)', [name, ip, voteCount], (err, result) => {
+  console.log(`Received data from client - Name: ${name}, Action: ${action}, IP: ${ip}`);
+
+  // Check if the user has already voted
+  pool.query('SELECT * FROM user_votes WHERE name = ? AND ip_address = ?', [name, ip], (err, result) => {
     if (err) {
-      console.error("Error inserting data into database:", err);
-      res.status(500).send("Error inserting data into database");
+      console.error("Error checking vote from database:", err);
+      res.status(500).send("Error checking vote from database");
+      return;
+    }
+
+    // If user hasn't voted yet, insert new vote record
+    if (result.length === 0) {
+      let voteCountChange = 0;
+      if (action === "+") {
+        voteCountChange = 1;
+      } else if (action === "-") {
+        voteCountChange = -1;
+      }
+
+      // Perform the SQL INSERT operation
+      pool.query('INSERT INTO user_votes (name, ip_address, vote_count, plus, minus ) VALUES (?, ?, ?, ?, ?)', [name, ip, voteCountChange, voteCountChange > 0 ? 1 : 0, voteCountChange < 0 ? 1 : 0], (err, result) => {
+        if (err) {
+          console.error("Error inserting data into database:", err);
+          res.status(500).send("Error inserting data into database");
+        } else {
+          console.log("Data inserted successfully");
+          res.status(200).send("Data inserted successfully");
+        }
+      });
     } else {
-      console.log("Data inserted successfully");
-      res.status(200).send("Data inserted successfully");
+      // If user has already voted, update the existing record
+      const currentVoteCount = result[0].vote_count;
+      let voteCountChange = 0;
+      if (action === "+") {
+        voteCountChange = 1;
+      } else if (action === "-") {
+        voteCountChange = -1;
+      }
+
+      const newVoteCount = currentVoteCount + voteCountChange;
+
+      // Perform the SQL UPDATE operation
+      pool.query('UPDATE user_votes SET vote_count = ?, plus = ?, minus = ? WHERE name = ? AND ip_address = ?', [newVoteCount, voteCountChange > 0 ? 1 : 0, voteCountChange < 0 ? 1 : 0, name, ip], (err, result) => {
+        if (err) {
+          console.error("Error updating data in database:", err);
+          res.status(500).send("Error updating data in database");
+        } else {
+          console.log("Data updated successfully");
+          res.status(200).send("Data updated successfully");
+        }
+      });
     }
   });
 });
@@ -53,6 +95,16 @@ app.post("/updateData", async (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
+
+
+
+
+
+
+
+
+
+
 
 
 
